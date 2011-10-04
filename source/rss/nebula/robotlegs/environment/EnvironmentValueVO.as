@@ -1,4 +1,4 @@
-package rocketsciencestudios.model.environment {
+package rss.nebula.robotlegs.environment {
 	import com.epologee.application.dvo.IParsable;
 
 	/**

@@ -1,4 +1,4 @@
-package rocketsciencestudios.model.text {
+package rss.nebula.text {
 	/**
 	 * @author Ralph Kuijpers @ Rocket Science Studios
 	 */

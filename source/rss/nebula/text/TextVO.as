@@ -1,4 +1,4 @@
-package rocketsciencestudios.model.text {
+package rss.nebula.text {
 	import com.epologee.application.dvo.IParsable;
 
 	/**

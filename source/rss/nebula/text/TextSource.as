@@ -1,4 +1,4 @@
-package rocketsciencestudios.model.text {
+package rss.nebula.text {
 	import com.greensock.loading.LoaderMax;
 
 	import flash.utils.Dictionary;
