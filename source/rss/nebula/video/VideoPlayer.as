@@ -122,6 +122,14 @@ package rss.nebula.video {
 			_video.pause();
 			_video.close();
 		}
+		
+		public function pause() : void {
+			_video.pause();
+		}
+		
+		public function resume() : void {
+			_video.resume();
+		}
 
 		private function showControls() : void {
 			_timeout.reset();
@@ -217,6 +225,7 @@ package rss.nebula.video {
 
 		private function handleEnterFrame(event : Event) : void {
 			var slider : IVideoScrubSlider = IVideoScrubSlider(controlsWithInterface(IVideoScrubSlider, 1)[0]);
+			if(!slider) return;
 			slider.buffer = _video.getPercentLoaded();
 			slider.position = _video.getPercentPlayed();
 		}
