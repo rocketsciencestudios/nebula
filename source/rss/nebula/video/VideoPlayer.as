@@ -249,5 +249,17 @@ package rss.nebula.video {
 
 			return matching;
 		}
+		
+		public function set volume(volume : Number) : void {
+			_video.volume = volume;
+		}
+		
+		public function videoDuration() : Number{
+			return _video.videoDuration;
+		}
+		
+		public function percentPlayed() : Number{
+			return _video.getPercentPlayed();
+		}
 	}
 }
