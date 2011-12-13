@@ -160,7 +160,6 @@ package rss.nebula.video {
 				s += p + ".";
 				p = p.parent;
 			}
-			notice(s);
 			showControls();
 		}
 
@@ -171,7 +170,6 @@ package rss.nebula.video {
 				s += p + ".";
 				p = p.parent;
 			}
-			notice(s);
 			hideControlsDelayed();
 		}
 
@@ -260,6 +258,10 @@ package rss.nebula.video {
 		
 		public function percentPlayed() : Number{
 			return _video.getPercentPlayed();
+		}
+		
+		public function get timePlayed() : Number {
+			return videoDuration() * percentPlayed();
 		}
 	}
 }
