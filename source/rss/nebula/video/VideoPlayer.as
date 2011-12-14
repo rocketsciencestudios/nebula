@@ -30,6 +30,7 @@ package rss.nebula.video {
 		//
 		private var _width : Number;
 		private var _height : Number;
+		private var _autoHideControls : Boolean;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -48,7 +49,8 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-		public function VideoPlayer(width : Number = 960, height : Number = 400) {
+		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true) {
+			_autoHideControls = autoHideControls;
 			_height = height;
 			_width = width;
 
@@ -62,8 +64,10 @@ package rss.nebula.video {
 			_video.playbackCompleted.add(playbackFinished.dispatch);
 			_video.bufferFull.add(debug);
 			_video.metaReceived.add(debug);
-			_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
-			_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
+			if (_autoHideControls) {
+				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
+				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
+			}
 
 			addChild(_video);
 
@@ -89,7 +93,7 @@ package rss.nebula.video {
 					break;
 			}
 
-			if (addTriggers) {
+			if (addTriggers && _autoHideControls) {
 				control.addEventListener(MouseEvent.ROLL_OVER, triggerControlsToShow);
 				control.addEventListener(MouseEvent.ROLL_OUT, triggerControlsToHide);
 				control.addEventListener(FocusEvent.FOCUS_IN, triggerControlsToShow);
