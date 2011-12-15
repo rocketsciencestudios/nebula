@@ -183,7 +183,7 @@ package rss.nebula.video.dependencies {
 
 			// Stoping the video once loaded
 			if (status == MrDoobVideoController.STOPPED)
-				stream.pause()
+				stream.pause();
 
 			if (!autoSize) {
 				setSize(videoWidth, videoHeight);

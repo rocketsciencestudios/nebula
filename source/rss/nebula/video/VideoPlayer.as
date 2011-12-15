@@ -22,6 +22,7 @@ package rss.nebula.video {
 	 */
 	public class VideoPlayer extends Sprite {
 		public var playbackFinished : Signal = new Signal();
+		public var playbackStarted : Signal = new Signal();
 		//
 		private var _video : MrDoobVideoController;
 		private var _muted : Boolean;
@@ -59,7 +60,7 @@ package rss.nebula.video {
 			_video = new MrDoobVideoController(width, height);
 			Draw.rectangle(_video, width, height, 0);
 
-			_video.playbackStarted.add(updateButtons);
+			_video.playbackStarted.add(handlePlaybackStarted);
 			_video.playbackCompleted.add(updateButtons);
 			_video.playbackCompleted.add(playbackFinished.dispatch);
 			_video.bufferFull.add(debug);
@@ -133,6 +134,11 @@ package rss.nebula.video {
 		
 		public function resume() : void {
 			_video.resume();
+		}
+
+		private function handlePlaybackStarted() : void {
+			updateButtons();
+			playbackStarted.dispatch();
 		}
 
 		private function showControls() : void {
