@@ -149,8 +149,9 @@ package rss.nebula.robotlegs.environment {
 
 			var domain : RegExp = new RegExp("http:\/\/(?:www\.)?([^\/]+)", "i");
 			var result : Array = _loaderURL.match(domain);
+			debug("result: " + result);
 
-			return result[1];
+			return LOCALHOST;
 		}
 	}
 }
