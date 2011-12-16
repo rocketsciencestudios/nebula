@@ -23,13 +23,15 @@ package rss.nebula.video {
 	public class VideoPlayer extends Sprite {
 		public var playbackFinished : Signal = new Signal();
 		public var playbackStarted : Signal = new Signal();
+		public var panelShown : Signal = new Signal();
+		public var panelHidden : Signal = new Signal();
 		//
 		private var _video : MrDoobVideoController;
 		private var _muted : Boolean;
 		private var _timeout : TimeDelay;
 		private var _controls : Array;
 		//
-		private var _width : Number;
+		private var _width : Number;	
 		private var _height : Number;
 		private var _autoHideControls : Boolean;
 
@@ -124,6 +126,7 @@ package rss.nebula.video {
 		}
 
 		public function stopAndClear() : void {
+			_video.seek(0);
 			_video.pause();
 			_video.close();
 		}
@@ -141,16 +144,17 @@ package rss.nebula.video {
 			playbackStarted.dispatch();
 		}
 
-		private function showControls() : void {
+		public function showControls() : void {
 			_timeout.reset();
 
 			var panels : Array = controlsWithInterface(IVideoPanel);
 			for each (var panel : IVideoPanel in panels) {
 				panel.show();
 			}
+			panelShown.dispatch();
 		}
 
-		private function hideControlsDelayed() : void {
+		public function hideControlsDelayed() : void {
 			_timeout.resetAndStart();
 		}
 
@@ -161,6 +165,7 @@ package rss.nebula.video {
 			for each (var panel : IVideoPanel in panels) {
 				panel.hide();
 			}
+			panelHidden.dispatch();
 		}
 
 		private function triggerControlsToShow(e : Event) : void {
