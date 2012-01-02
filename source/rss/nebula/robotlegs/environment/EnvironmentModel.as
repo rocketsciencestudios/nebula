@@ -151,7 +151,7 @@ package rss.nebula.robotlegs.environment {
 			var result : Array = _loaderURL.match(domain);
 			debug("result: " + result);
 
-			return LOCALHOST;
+			return result[1];
 		}
 	}
 }
