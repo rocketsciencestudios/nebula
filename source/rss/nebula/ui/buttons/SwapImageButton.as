@@ -11,7 +11,7 @@ package rss.nebula.ui.buttons {
 	 * @author Ralph Kuijpers @ Rocket Science Studios
 	 */
 	public class SwapImageButton extends Sprite implements IHasDrawnStates {
-		private var _dsb : DrawnStateButtonBehavior;
+		public var dsb : DrawnStateButtonBehavior;
 		private var _iconNormal : Sprite;
 		private var _iconOver : Sprite;
 
@@ -19,7 +19,7 @@ package rss.nebula.ui.buttons {
 			_iconOver = iconOver;
 			_iconNormal = iconNormal;
 			
-			_dsb = new DrawnStateButtonBehavior(this);
+			dsb = new DrawnStateButtonBehavior(this);
 			
 			addChild(_iconNormal);
 			addChild(_iconOver);
