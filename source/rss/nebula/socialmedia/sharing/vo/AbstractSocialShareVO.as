@@ -2,7 +2,7 @@ package rss.nebula.socialmedia.sharing.vo {
 	/**
 	 * @author fns-rss-005
 	 */
-	public class SocialShareVO {
+	public class AbstractSocialShareVO {
 		private var _shareText : String = '';
 		private var _url : String = '';
 		
@@ -21,6 +21,5 @@ package rss.nebula.socialmedia.sharing.vo {
 		public function set url(url : String) : void {
 			_url = url;
 		}
-		
 	}
 }

@@ -2,7 +2,7 @@ package rss.nebula.socialmedia.sharing.vo {
 	/**
 	 * @author Michiel van der Plas @ Rocket Science Studios
 	 */
-	public class TwitterShareVO extends SocialShareVO {
+	public class TwitterShareVO extends AbstractSocialShareVO implements ISocialShare {
 		private var _hashtags : Array;
 		
 		public function get hashtags() : Array {
@@ -13,7 +13,7 @@ package rss.nebula.socialmedia.sharing.vo {
 			_hashtags = hashtags;
 		}
 		
-		public function returnUrlVariables () : Object{
+		public function urlVariables () : Object{
 			var obj : Object = new Object();
 			
 			var hashString : String = '';

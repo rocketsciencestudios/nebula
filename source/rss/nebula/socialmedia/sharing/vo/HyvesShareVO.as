@@ -2,7 +2,7 @@ package rss.nebula.socialmedia.sharing.vo {
 	/**
 	 * @author Michiel van der Plas @ Rocket Science Studios
 	 */
-	public class HyvesShareVO extends SocialShareVO {
+	public class HyvesShareVO extends AbstractSocialShareVO implements ISocialShare{
 		private var _title : String = '';
 		private var _rating : int;
 		private var _type : int;
@@ -31,7 +31,7 @@ package rss.nebula.socialmedia.sharing.vo {
 			_type = type;
 		}
 		
-		public function returnUrlVariables () : Object{
+		public function urlVariables () : Object{
 			var obj : Object = new Object();
 			
 			obj.text = '';
