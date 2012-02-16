@@ -83,7 +83,7 @@ package rss.nebula.video {
 
 			switch(interfaceOfControl(control)) {
 				case IVideoScrubSlider:
-					IVideoScrubSlider(control).scrubbed.add(_video.seek);
+					IVideoScrubSlider(control).scrubbed.add(handleScrubbed);
 					addTriggers = true;
 					break;
 				case IVideoPlaybackToggle:
@@ -137,6 +137,7 @@ package rss.nebula.video {
 		
 		public function resume() : void {
 			_video.resume();
+			updateButtons();
 		}
 
 		private function handlePlaybackStarted() : void {
@@ -205,6 +206,15 @@ package rss.nebula.video {
 				_video.resume();
 			}
 
+			updateButtons();
+		}
+
+		private function handleScrubbed(percent : Number) : void {
+			if(_video.status >= MrDoobVideoController.STOPPED) {
+				_video.status = MrDoobVideoController.PLAYING;
+				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
+			}
+			_video.seek(percent);
 			updateButtons();
 		}
 
