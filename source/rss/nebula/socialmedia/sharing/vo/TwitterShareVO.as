@@ -1,5 +1,4 @@
 package rss.nebula.socialmedia.sharing.vo {
-	import rss.nebula.socialmedia.sharing.SocialEnvironmentNames;
 	/**
 	 * @author Michiel van der Plas @ Rocket Science Studios
 	 */
@@ -28,10 +27,6 @@ package rss.nebula.socialmedia.sharing.vo {
 			if(_hashtags) obj.text += hashString;
 			
 			return obj;
-		}
-
-		public function get platform() : String {
-			return SocialEnvironmentNames.TWITTER_SHARE;
 		}
 	}
 }

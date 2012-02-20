@@ -4,7 +4,5 @@ package rss.nebula.socialmedia.sharing.vo {
 	 */
 	public interface ISocialShare {
 		function urlVariables () : Object;
-		
-		function get platform () : String;
 	}
 }
