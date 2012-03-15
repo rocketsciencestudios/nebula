@@ -1,5 +1,8 @@
-package rss.nebula.video {
-	import rss.nebula.video.dependencies.MrDoobVideoController;
+package rss.nebula.video.threesixty {
+	import away3d.cameras.HoverCamera3D;
+	import away3d.containers.View3D;
+	import away3d.primitives.Sphere;
+
 	import rss.nebula.video.plugins.IVideoControl;
 	import rss.nebula.video.plugins.IVideoMuteToggle;
 	import rss.nebula.video.plugins.IVideoPanel;
@@ -9,6 +12,7 @@ package rss.nebula.video {
 
 	import com.epologee.time.TimeDelay;
 	import com.epologee.util.drawing.Draw;
+	import com.epologee.util.drawing.SpriteDrawings;
 
 	import org.osflash.signals.Signal;
 
@@ -19,25 +23,39 @@ package rss.nebula.video {
 	import flash.events.MouseEvent;
 
 	/**
-	 * @author Eric-Paul Lecluse (c) epologee.com
+	 * @author Ralph Kuijpers @ Rocket Science Studios
 	 */
-	public class VideoPlayer extends Sprite {
+	public class Video360Player extends Sprite {
 		public var playbackFinished : Signal = new Signal();
 		public var playbackStarted : Signal = new Signal();
 		public var panelShown : Signal = new Signal();
 		public var panelHidden : Signal = new Signal();
 		//
-		private var _video : MrDoobVideoController;
+		private var _videoController : VideoMaterialController;
 		private var _muted : Boolean;
 		private var _timeout : TimeDelay;
 		private var _controls : Array;
 		//
-		private var _width : Number;	
-		private var _height : Number;
+		private var _sourceWidth : Number;
+		private var _sourceHeight : Number;
+		private var _videoWidth : Number;
+		private var _videoHeight : Number;
+		private var _sphereSegmentsWidth : Number;
+		private var _sphereSegmentsHeight : Number;
 		private var _autoHideControls : Boolean;
+		
+		/**
+		 * To use this class, make sure you have away3d-core-fp10 as linked library in your project
+		 * https://github.com/away3d/away3d-core-fp10
+		 */
+		private var _camera : HoverCamera3D;
+		private var _view : View3D;
+		private var _sphere : Sphere;
+		
 
 		/**
-		 * Construct the video player with a desired width and height:
+		 * Construct the video player with a desired width and height, 
+		 * next to that also add the source (total 360 video) width and height and how many segments the sphere should contain:
 		 * 
 		 * 	_player = new VideoPlayer();
 		 * 
@@ -53,27 +71,31 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true) {
+		public function Video360Player(videoWidth : Number = 960, videoHeight : Number = 400, videoSourceWidth : Number = 1280, videoSourceHeight : Number = 720, sphereSegmentsWidth : Number = 28, sphereSegmentsHeight : Number = 28, autoHideControls : Boolean = true) {
+			_sphereSegmentsHeight = sphereSegmentsHeight;
+			_sphereSegmentsWidth = sphereSegmentsWidth;
+			_videoHeight = videoHeight;
+			_videoWidth = videoWidth;
 			_autoHideControls = autoHideControls;
-			_height = height;
-			_width = width;
+			_sourceHeight = videoSourceHeight;
+			_sourceWidth = videoSourceWidth;
 
 			_controls = [];
 
-			_video = new MrDoobVideoController(width, height);
-			Draw.rectangle(_video, width, height, 0);
+			_videoController = new VideoMaterialController(videoSourceWidth, videoSourceHeight);
+			Draw.rectangle(_videoController.sprite, videoSourceWidth, videoSourceHeight, 0);
 
-			_video.playbackStarted.add(handlePlaybackStarted);
-			_video.playbackCompleted.add(updateButtons);
-			_video.playbackCompleted.add(playbackFinished.dispatch);
-			_video.bufferFull.add(debug);
-			_video.metaReceived.add(debug);
+			_videoController.playbackStarted.add(handlePlaybackStarted);
+			_videoController.playbackCompleted.add(updateButtons);
+			_videoController.playbackCompleted.add(playbackFinished.dispatch);
+			_videoController.bufferFull.add(debug);
+			_videoController.metaReceived.add(debug);
+
+			create3DScene();
 			if (_autoHideControls) {
-				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
-				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
+				_view.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
+				_view.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
 			}
-
-			addChild(_video);
 
 			_timeout = new TimeDelay(hideControls, 2500, null, false, false);
 		}
@@ -118,36 +140,31 @@ package rss.nebula.video {
 		}
 
 		override public function get width() : Number {
-			return _width;
+			return _videoWidth;
 		}
 
 		override public function get height() : Number {
-			return _height;
+			return _videoHeight;
 		}
 
 		public function loadAndPlay(url : String) : void {
-			_video.load(url);
-			_video.play();
+			_videoController.load(url);
+			_videoController.play();
 		}
 
 		public function stopAndClear() : void {
-			_video.seek(0);
-			_video.pause();
-			_video.close();
-		}
-		
-		public function pause() : void {
-			_video.pause();
-		}
-		
-		public function resume() : void {
-			_video.resume();
-			updateButtons();
+			_videoController.seek(0);
+			_videoController.pause();
+			_videoController.close();
 		}
 
-		private function handlePlaybackStarted() : void {
+		public function pause() : void {
+			_videoController.pause();
+		}
+
+		public function resume() : void {
+			_videoController.resume();
 			updateButtons();
-			playbackStarted.dispatch();
 		}
 
 		public function showControls() : void {
@@ -162,6 +179,35 @@ package rss.nebula.video {
 
 		public function hideControlsDelayed() : void {
 			_timeout.resetAndStart();
+		}
+
+		private function create3DScene() : void {
+			var material : VideoMaterialController = _videoController;
+			material.smooth = true;
+
+			_camera = new HoverCamera3D();
+			_camera.fov = 54;
+			_camera.z = -1000;
+			_camera.panAngle = -90;
+			_camera.tiltAngle = 0;
+			_camera.hover(true);
+			_camera.minTiltAngle = -18;
+			_camera.maxTiltAngle = 1;
+			_camera.zoom = 5;
+
+			_view = new View3D({camera:_camera, x:_videoWidth / 2, y:_videoHeight / 2});
+			addChild(_view);
+			
+			_view.mask = addChild(SpriteDrawings.rectangle(_videoWidth, _videoHeight));
+
+			_sphere = new Sphere({radius:_sourceWidth, material:material, segmentsW:_sphereSegmentsWidth, segmentsH:_sphereSegmentsHeight});
+			_sphere.scaleX = -1;
+			_view.scene.addChild(_sphere);
+		}
+
+		private function handlePlaybackStarted() : void {
+			updateButtons();
+			playbackStarted.dispatch();
 		}
 
 		private function hideControls() : void {
@@ -196,41 +242,40 @@ package rss.nebula.video {
 
 		private function toggleMute() : void {
 			_muted = !_muted;
-			_video.volume = _muted ? 0 : 1;
+			_videoController.volume = _muted ? 0 : 1;
 
 			updateButtons();
 		}
 		
 		private function handleVolumeChanged(value : Number) : void {
-			_video.volume = value;
+			_videoController.volume = value;
 			
 			updateButtons();
 		}
 
 		private function togglePlayback() : void {
-			if (_video.isPlaying()) {
-				_video.pause();
-			} else if (_video.status >= MrDoobVideoController.STOPPED) {
+			if (_videoController.isPlaying()) {
+				_videoController.pause();
+			} else if (_videoController.status >= VideoMaterialController.STOPPED) {
 				// replay
-				_video.play(0);
+				_videoController.play(0);
 			} else {
-				_video.resume();
+				_videoController.resume();
 			}
 
 			updateButtons();
 		}
 
 		private function handleScrubbed(percent : Number) : void {
-			if(_video.status >= MrDoobVideoController.STOPPED) {
-				_video.status = MrDoobVideoController.PLAYING;
+			if (_videoController.status >= VideoMaterialController.STOPPED) {
+				_videoController.status = VideoMaterialController.PLAYING;
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
-			_video.seek(percent);
+			_videoController.seek(percent);
 			updateButtons();
 		}
 
 		private function updateButtons() : void {
-			debug();
 
 			var muteToggles : Array = controlsWithInterface(IVideoMuteToggle);
 			for each (var muteToggle : IVideoMuteToggle in muteToggles) {
@@ -241,7 +286,7 @@ package rss.nebula.video {
 				}
 			}
 
-			if (_video.isPlaying()) {
+			if (_videoController.isPlaying()) {
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			} else {
 				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
@@ -249,7 +294,7 @@ package rss.nebula.video {
 
 			var playbackToggles : Array = controlsWithInterface(IVideoPlaybackToggle);
 			for each (var playbackToggle : IVideoPlaybackToggle in playbackToggles) {
-				if (_video.isPlaying()) {
+				if (_videoController.isPlaying()) {
 					playbackToggle.select();
 				} else {
 					playbackToggle.deselect();
@@ -259,9 +304,12 @@ package rss.nebula.video {
 
 		private function handleEnterFrame(event : Event) : void {
 			var slider : IVideoScrubSlider = IVideoScrubSlider(controlsWithInterface(IVideoScrubSlider, 1)[0]);
-			if(!slider) return;
-			slider.buffer = _video.getPercentLoaded();
-			slider.position = _video.getPercentPlayed();
+			if (!slider) return;
+			slider.buffer = _videoController.getPercentLoaded();
+			slider.position = _videoController.getPercentPlayed();
+
+			_camera.hover();
+			_view.render();
 		}
 
 		private function interfaceOfControl(control : IVideoControl) : Class {
@@ -284,21 +332,25 @@ package rss.nebula.video {
 
 			return matching;
 		}
-		
+
 		public function set volume(volume : Number) : void {
-			_video.volume = volume;
+			_videoController.volume = volume;
 		}
-		
-		public function videoDuration() : Number{
-			return _video.videoDuration;
+
+		public function videoDuration() : Number {
+			return _videoController.videoDuration;
 		}
-		
-		public function percentPlayed() : Number{
-			return _video.getPercentPlayed();
+
+		public function percentPlayed() : Number {
+			return _videoController.getPercentPlayed();
 		}
-		
+
 		public function get timePlayed() : Number {
 			return videoDuration() * percentPlayed();
+		}
+
+		public function get camera() : HoverCamera3D {
+			return _camera;
 		}
 	}
 }
