@@ -139,14 +139,6 @@ package rss.nebula.video.threesixty {
 			_timeout.delay = inactivityTimeout;
 		}
 
-		override public function get width() : Number {
-			return _videoWidth;
-		}
-
-		override public function get height() : Number {
-			return _videoHeight;
-		}
-
 		public function loadAndPlay(url : String) : void {
 			_videoController.load(url);
 			_videoController.play();
@@ -181,26 +173,26 @@ package rss.nebula.video.threesixty {
 			_timeout.resetAndStart();
 		}
 
+		public function update3DView() : void {
+			_camera.hover();
+			_view.render();
+		}
+
 		private function create3DScene() : void {
 			var material : VideoMaterialController = _videoController;
 			material.smooth = true;
 
 			_camera = new HoverCamera3D();
 			_camera.fov = 54;
-			_camera.z = -1000;
-			_camera.panAngle = -90;
-			_camera.tiltAngle = 0;
-			_camera.hover(true);
-			_camera.minTiltAngle = -18;
+			_camera.z = -_sourceWidth/2;
 			_camera.maxTiltAngle = 1;
-			_camera.zoom = 5;
 
 			_view = new View3D({camera:_camera, x:_videoWidth / 2, y:_videoHeight / 2});
 			addChild(_view);
 			
 			_view.mask = addChild(SpriteDrawings.rectangle(_videoWidth, _videoHeight));
 
-			_sphere = new Sphere({radius:_sourceWidth, material:material, segmentsW:_sphereSegmentsWidth, segmentsH:_sphereSegmentsHeight});
+			_sphere = new Sphere({radius:_sourceWidth*2, material:material, segmentsW:_sphereSegmentsWidth, segmentsH:_sphereSegmentsHeight});
 			_sphere.scaleX = -1;
 			_view.scene.addChild(_sphere);
 		}
@@ -208,6 +200,10 @@ package rss.nebula.video.threesixty {
 		private function handlePlaybackStarted() : void {
 			updateButtons();
 			playbackStarted.dispatch();
+			_camera.panAngle = -90;
+			_camera.tiltAngle = 0;
+			_camera.hover(true);
+			_camera.zoom = 3;
 		}
 
 		private function hideControls() : void {
@@ -259,6 +255,7 @@ package rss.nebula.video.threesixty {
 			} else if (_videoController.status >= VideoMaterialController.STOPPED) {
 				// replay
 				_videoController.play(0);
+				playbackStarted.dispatch();
 			} else {
 				_videoController.resume();
 			}
@@ -307,9 +304,8 @@ package rss.nebula.video.threesixty {
 			if (!slider) return;
 			slider.buffer = _videoController.getPercentLoaded();
 			slider.position = _videoController.getPercentPlayed();
-
-			_camera.hover();
-			_view.render();
+			
+			update3DView();
 		}
 
 		private function interfaceOfControl(control : IVideoControl) : Class {
@@ -351,6 +347,10 @@ package rss.nebula.video.threesixty {
 
 		public function get camera() : HoverCamera3D {
 			return _camera;
+		}
+		
+		public function get isPlaying() : Boolean {
+			return _videoController.isPlaying();
 		}
 	}
 }
