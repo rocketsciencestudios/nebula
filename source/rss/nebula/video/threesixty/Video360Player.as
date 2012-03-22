@@ -1,4 +1,5 @@
 package rss.nebula.video.threesixty {
+	import rss.nebula.video.plugins.IVideoReplayControl;
 	import away3d.cameras.HoverCamera3D;
 	import away3d.containers.View3D;
 	import away3d.primitives.Sphere;
@@ -111,6 +112,10 @@ package rss.nebula.video.threesixty {
 					break;
 				case IVideoPlaybackToggle:
 					IVideoPlaybackToggle(control).playbackToggled.add(togglePlayback);
+					addTriggers = true;
+					break;
+				case IVideoReplayControl:
+					IVideoReplayControl(control).replay.add(handleReplay);
 					addTriggers = true;
 					break;
 				case IVideoMuteToggle:
@@ -262,6 +267,12 @@ package rss.nebula.video.threesixty {
 
 			updateButtons();
 		}
+		
+		
+		private function handleReplay() : void {
+			_videoController.play(0);
+			playbackStarted.dispatch();
+		}
 
 		private function handleScrubbed(percent : Number) : void {
 			if (_videoController.status >= VideoMaterialController.STOPPED) {
@@ -311,6 +322,7 @@ package rss.nebula.video.threesixty {
 		private function interfaceOfControl(control : IVideoControl) : Class {
 			if (control is IVideoMuteToggle) return IVideoMuteToggle;
 			if (control is IVideoPlaybackToggle) return IVideoPlaybackToggle;
+			if (control is IVideoReplayControl) return IVideoReplayControl;
 			if (control is IVideoScrubSlider) return IVideoScrubSlider;
 			if (control is IVideoVolumeControl) return IVideoVolumeControl;
 			return null;
