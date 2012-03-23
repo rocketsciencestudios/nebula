@@ -271,6 +271,7 @@ package rss.nebula.video.threesixty {
 		
 		private function handleReplay() : void {
 			_videoController.play(0);
+			resume();
 			playbackStarted.dispatch();
 		}
 
