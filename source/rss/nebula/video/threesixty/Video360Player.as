@@ -1,5 +1,4 @@
 package rss.nebula.video.threesixty {
-	import rss.nebula.video.plugins.IVideoReplayControl;
 	import away3d.cameras.HoverCamera3D;
 	import away3d.containers.View3D;
 	import away3d.primitives.Sphere;
@@ -8,6 +7,7 @@ package rss.nebula.video.threesixty {
 	import rss.nebula.video.plugins.IVideoMuteToggle;
 	import rss.nebula.video.plugins.IVideoPanel;
 	import rss.nebula.video.plugins.IVideoPlaybackToggle;
+	import rss.nebula.video.plugins.IVideoReplayControl;
 	import rss.nebula.video.plugins.IVideoScrubSlider;
 	import rss.nebula.video.plugins.IVideoVolumeControl;
 
@@ -52,6 +52,7 @@ package rss.nebula.video.threesixty {
 		private var _camera : HoverCamera3D;
 		private var _view : View3D;
 		private var _sphere : Sphere;
+		private var _data : Video360VO;
 		
 
 		/**
@@ -72,19 +73,20 @@ package rss.nebula.video.threesixty {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-		public function Video360Player(videoWidth : Number = 960, videoHeight : Number = 400, videoSourceWidth : Number = 1280, videoSourceHeight : Number = 720, sphereSegmentsWidth : Number = 28, sphereSegmentsHeight : Number = 28, autoHideControls : Boolean = true) {
+		public function Video360Player(data : Video360VO, videoWidth : Number = 960, videoHeight : Number = 400, sphereSegmentsWidth : Number = 28, sphereSegmentsHeight : Number = 28, autoHideControls : Boolean = true) {
+			_data = data;
 			_sphereSegmentsHeight = sphereSegmentsHeight;
 			_sphereSegmentsWidth = sphereSegmentsWidth;
 			_videoHeight = videoHeight;
 			_videoWidth = videoWidth;
 			_autoHideControls = autoHideControls;
-			_sourceHeight = videoSourceHeight;
-			_sourceWidth = videoSourceWidth;
+			_sourceWidth = Number(_data.sourceWidth);
+			_sourceHeight = Number(_data.sourceHeight);
 
 			_controls = [];
 
-			_videoController = new VideoMaterialController(videoSourceWidth, videoSourceHeight);
-			Draw.rectangle(_videoController.sprite, videoSourceWidth, videoSourceHeight, 0);
+			_videoController = new VideoMaterialController(_sourceWidth, _sourceHeight);
+			Draw.rectangle(_videoController.sprite, _sourceWidth, _sourceHeight, 0);
 
 			_videoController.playbackStarted.add(handlePlaybackStarted);
 			_videoController.playbackCompleted.add(updateButtons);
@@ -190,7 +192,6 @@ package rss.nebula.video.threesixty {
 			_camera = new HoverCamera3D();
 			_camera.fov = 54;
 			_camera.z = -_sourceWidth/2;
-			_camera.maxTiltAngle = 1;
 
 			_view = new View3D({camera:_camera, x:_videoWidth / 2, y:_videoHeight / 2});
 			addChild(_view);
