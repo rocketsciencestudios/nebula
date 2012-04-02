@@ -88,13 +88,13 @@ package rss.nebula.video.threesixty {
 			_videoController = new VideoMaterialController(_sourceWidth, _sourceHeight);
 			Draw.rectangle(_videoController.sprite, _sourceWidth, _sourceHeight, 0);
 
+			create3DScene();
 			_videoController.playbackStarted.add(handlePlaybackStarted);
 			_videoController.playbackCompleted.add(updateButtons);
 			_videoController.playbackCompleted.add(playbackFinished.dispatch);
 			_videoController.bufferFull.add(debug);
 			_videoController.metaReceived.add(debug);
 
-			create3DScene();
 			if (_autoHideControls) {
 				_view.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
 				_view.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
@@ -182,7 +182,12 @@ package rss.nebula.video.threesixty {
 
 		public function update3DView() : void {
 			_camera.hover();
-			_view.render();
+			try{
+				_view.render();		
+			}catch(e:Error){
+				error(e.message);
+			}
+			
 		}
 
 		private function create3DScene() : void {
@@ -313,12 +318,13 @@ package rss.nebula.video.threesixty {
 		}
 
 		private function handleEnterFrame(event : Event) : void {
+			update3DView();
+			
 			var slider : IVideoScrubSlider = IVideoScrubSlider(controlsWithInterface(IVideoScrubSlider, 1)[0]);
 			if (!slider) return;
 			slider.buffer = _videoController.getPercentLoaded();
 			slider.position = _videoController.getPercentPlayed();
 			
-			update3DView();
 		}
 
 		private function interfaceOfControl(control : IVideoControl) : Class {
