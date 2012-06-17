@@ -108,6 +108,10 @@ package rss.nebula.video {
 				control.addEventListener(FocusEvent.FOCUS_OUT, triggerControlsToHide);
 			}
 		}
+		
+		public function set loop(value : Boolean) : void {
+			_video.loop = value;
+		}
 
 		public function get inactivityTimeout() : int {
 			return _timeout.delay;
@@ -134,6 +138,11 @@ package rss.nebula.video {
 			_video.seek(0);
 			_video.pause();
 			_video.close();
+		}
+		
+		public function resetAndPause() : void {
+			_video.seek(0);
+			_video.pause();
 		}
 		
 		public function pause() : void {

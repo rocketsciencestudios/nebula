@@ -53,6 +53,7 @@ package rss.nebula.video.threesixty {
 		private var _view : View3D;
 		private var _sphere : Sphere;
 		private var _data : Video360VO;
+		private var _viewOffsetY : Number;
 		
 
 		/**
@@ -73,7 +74,8 @@ package rss.nebula.video.threesixty {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-		public function Video360Player(data : Video360VO, videoWidth : Number = 960, videoHeight : Number = 400, sphereSegmentsWidth : Number = 28, sphereSegmentsHeight : Number = 28, autoHideControls : Boolean = true) {
+		public function Video360Player(data : Video360VO, videoWidth : Number = 960, videoHeight : Number = 400, viewOffsetY : Number = 0, sphereSegmentsWidth : Number = 28, sphereSegmentsHeight : Number = 28, autoHideControls : Boolean = true) {
+			_viewOffsetY = viewOffsetY;
 			_data = data;
 			_sphereSegmentsHeight = sphereSegmentsHeight;
 			_sphereSegmentsWidth = sphereSegmentsWidth;
@@ -151,6 +153,11 @@ package rss.nebula.video.threesixty {
 			_videoController.play();
 		}
 
+		public function resetAndPause() : void {
+			_videoController.seek(0);
+			_videoController.pause();
+		}
+		
 		public function stopAndClear() : void {
 			_videoController.seek(0);
 			_videoController.pause();
@@ -189,33 +196,37 @@ package rss.nebula.video.threesixty {
 			}
 			
 		}
+		
+		// SHOULD BE SET IN VIDEO STARTED
+		public function setupCamera(fov : Number = 54, zoom : Number = 3, panAngle : Number = 0, tiltAngle : Number = 0) : void {
+			_camera.fov = fov;
+			_camera.panAngle = panAngle;
+            _camera.tiltAngle = tiltAngle;
+            _camera.zoom = zoom;
+            _camera.hover(true);
+		}
 
 		private function create3DScene() : void {
-			var material : VideoMaterialController = _videoController;
-			material.smooth = true;
+            var material : VideoMaterialController = _videoController;
+            material.smooth = true;
 
-			_camera = new HoverCamera3D();
-			_camera.fov = 54;
-			_camera.z = -_sourceWidth/2;
+            _camera = new HoverCamera3D();
+            _camera.z = -_sourceWidth/2;
 
-			_view = new View3D({camera:_camera, x:_videoWidth / 2, y:_videoHeight / 2});
-			addChild(_view);
-			
-			_view.mask = addChild(SpriteDrawings.rectangle(_videoWidth, _videoHeight));
+            _view = new View3D({camera:_camera, x:_videoWidth / 2, y:_videoHeight / 2 + _viewOffsetY});
+            addChild(_view);
+            
+            _view.mask = addChild(SpriteDrawings.rectangle(_videoWidth, _videoHeight));
 
-			_sphere = new Sphere({radius:_sourceWidth*2, material:material, segmentsW:_sphereSegmentsWidth, segmentsH:_sphereSegmentsHeight});
-			_sphere.scaleX = -1;
-			_view.scene.addChild(_sphere);
-		}
+            _sphere = new Sphere({radius:_sourceWidth*2, material:material, segmentsW:_sphereSegmentsWidth, segmentsH:_sphereSegmentsHeight});
+            _sphere.scaleX = -1;
+            _view.scene.addChild(_sphere);
+        }
 
-		private function handlePlaybackStarted() : void {
-			updateButtons();
-			playbackStarted.dispatch();
-			_camera.panAngle = -90;
-			_camera.tiltAngle = 0;
-			_camera.hover(true);
-			_camera.zoom = 3;
-		}
+        private function handlePlaybackStarted() : void {
+            updateButtons();
+            playbackStarted.dispatch();
+        }
 
 		private function hideControls() : void {
 			_timeout.reset();
