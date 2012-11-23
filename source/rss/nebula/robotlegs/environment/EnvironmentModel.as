@@ -35,7 +35,7 @@ package rss.nebula.robotlegs.environment {
 			return _domain;
 		}
 
-		public function getValueByName(name : String, appendVariables : Object = null) : String {
+		public function getValueByName(name : String, appendVariables : Object = null, escapeVars : Boolean = true) : String {
 			var value : EnvironmentValueVO = _environment[name] as EnvironmentValueVO;
 
 			if (!value) {
@@ -52,7 +52,11 @@ package rss.nebula.robotlegs.environment {
 
 			if (appendVariables) {
 				for (var key : String in appendVariables) {
-					suffix += key + "=" + escape(appendVariables[key]) + "&";
+					if (escapeVars) {
+						suffix += key + "=" + escape(appendVariables[key]) + "&";
+					} else {
+						suffix += key + "=" + appendVariables[key] + "&";
+					}
 				}
 				suffix = suffix.substring(0, suffix.length - 1);
 			}
@@ -64,8 +68,8 @@ package rss.nebula.robotlegs.environment {
 			return value.suffixURL(suffix);
 		}
 
-		public function getURLRequestByName(name : String, appendVariables : Object = null) : URLRequest {
-			var url : String = getValueByName(name, appendVariables);
+		public function getURLRequestByName(name : String, appendVariables : Object = null, escapeVars : Boolean = true) : URLRequest {
+			var url : String = getValueByName(name, appendVariables, escapeVars);
 			if (url == "") return null;
 
 			return new URLRequest(url);
@@ -77,8 +81,8 @@ package rss.nebula.robotlegs.environment {
 			return _timeline.loaderInfo.parameters[inName];
 		}
 
-		public function navigateToByName(name : String, window : String = "_blank", appendVariables : Object = null) : void {
-			var request : URLRequest = new URLRequest(getValueByName(name, appendVariables));
+		public function navigateToByName(name : String, window : String = "_blank", appendVariables : Object = null, escapeVars : Boolean = true) : void {
+			var request : URLRequest = new URLRequest(getValueByName(name, appendVariables, escapeVars));
 			navigateToURL(request, window);
 		}
 
@@ -150,7 +154,9 @@ package rss.nebula.robotlegs.environment {
 			var domain : RegExp = new RegExp("http:\/\/(?:www\.)?([^\/]+)", "i");
 			var result : Array = _loaderURL.match(domain);
 			debug("result: " + result);
-
+			
+			//TODO: fix "https" always returns null;
+			return LOCALHOST;
 			return result[1];
 		}
 	}
