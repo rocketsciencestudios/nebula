@@ -22,6 +22,10 @@ package rss.nebula.video {
 	 * @author Eric-Paul Lecluse (c) epologee.com
 	 */
 	public class VideoPlayer extends Sprite {
+		public var videoPlayed : Signal = new Signal();
+		public var videoPaused : Signal = new Signal();
+		public var videoLoaded : Signal = new Signal();
+		public var videoMetaReceived : Signal = new Signal();
 		public var playbackFinished : Signal = new Signal();
 		public var playbackStarted : Signal = new Signal();
 		public var panelShown : Signal = new Signal();
@@ -66,8 +70,9 @@ package rss.nebula.video {
 			_video.playbackStarted.add(handlePlaybackStarted);
 			_video.playbackCompleted.add(updateButtons);
 			_video.playbackCompleted.add(playbackFinished.dispatch);
+			_video.loaded.add(videoLoaded.dispatch);
 			_video.bufferFull.add(debug);
-			_video.metaReceived.add(debug);
+			_video.metaReceived.add(videoMetaReceived.dispatch);
 			if (_autoHideControls) {
 				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
 				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
@@ -121,17 +126,21 @@ package rss.nebula.video {
 			_timeout.delay = inactivityTimeout;
 		}
 
-		override public function get width() : Number {
-			return _width;
-		}
-
-		override public function get height() : Number {
-			return _height;
-		}
+//		override public function get width() : Number {
+//			return _width;
+//		}
+//
+//		override public function get height() : Number {
+//			return _height;
+//		}
 
 		public function loadAndPlay(url : String) : void {
 			_video.load(url);
 			_video.play();
+		}
+		
+		public function load(url : String) : void {
+			_video.load(url);
 		}
 
 		public function stopAndClear() : void {
@@ -143,15 +152,23 @@ package rss.nebula.video {
 		public function resetAndPause() : void {
 			_video.seek(0);
 			_video.pause();
+			videoPaused.dispatch();
 		}
 		
 		public function pause() : void {
 			_video.pause();
+			videoPaused.dispatch();
+			updateButtons();
 		}
 		
 		public function resume() : void {
 			_video.resume();
+			videoPlayed.dispatch();
 			updateButtons();
+		}
+		
+		public function seek(value : Number) : void {
+			_video.seek(value);
 		}
 
 		private function handlePlaybackStarted() : void {
@@ -219,11 +236,14 @@ package rss.nebula.video {
 		private function togglePlayback() : void {
 			if (_video.isPlaying()) {
 				_video.pause();
+				videoPaused.dispatch();
 			} else if (_video.status >= MrDoobVideoController.STOPPED) {
 				// replay
 				_video.play(0);
+				videoPlayed.dispatch();
 			} else {
 				_video.resume();
+				videoPlayed.dispatch();
 			}
 
 			updateButtons();
@@ -239,8 +259,6 @@ package rss.nebula.video {
 		}
 
 		private function updateButtons() : void {
-			debug();
-
 			var muteToggles : Array = controlsWithInterface(IVideoMuteToggle);
 			for each (var muteToggle : IVideoMuteToggle in muteToggles) {
 				if (_muted) {
@@ -298,8 +316,16 @@ package rss.nebula.video {
 			_video.volume = volume;
 		}
 		
+		public function get volume() : Number {
+			return _video.volume;
+		}
+		
 		public function videoDuration() : Number{
 			return _video.videoDuration;
+		}
+		
+		public function percentLoaded() : Number{
+			return _video.getPercentLoaded();
 		}
 		
 		public function percentPlayed() : Number{

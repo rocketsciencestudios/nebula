@@ -24,6 +24,7 @@
  *  07.12.13		1.0		Mr.doob		First version
  **/
 package rss.nebula.video.dependencies {
+	import flash.events.Event;
 	import org.osflash.signals.Signal;
 
 	import flash.display.Sprite;
@@ -58,6 +59,7 @@ package rss.nebula.video.dependencies {
 		public var bufferFull : Signal = new Signal();
 		public var metaReceived : Signal = new Signal();
 		public var playbackCompleted : Signal = new Signal();
+		public var loaded : Signal = new Signal();
 
 		/**
 		 * Creates a Video Controller
@@ -98,6 +100,7 @@ package rss.nebula.video.dependencies {
 
 		// .. CONTROL METHODS .............................................................................
 		public function load(file : String = null) : void {
+			addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			stream.play(file);
 			status = MrDoobVideoController.STOPPED;
 		}
@@ -178,6 +181,7 @@ package rss.nebula.video.dependencies {
 			for (var i:String in metadata)
 			trace(i + ": " + metadata[i]);
 			 */
+			debug("metadata: " + metadata.duration);
 			videoDuration = metadata.duration;
 			videoFPS = metadata.framerate;
 
@@ -196,7 +200,7 @@ package rss.nebula.video.dependencies {
 		}
 
 		public function netStatusHandler(event : NetStatusEvent) : void {
-			debug("event.info.code: "+event.info.code);
+//			debug("event.info.code: "+event.info.code);
 			switch(event.info.code) {
 				case "NetStream.Play.Start":
 					playbackStarted.dispatch();
@@ -212,6 +216,13 @@ package rss.nebula.video.dependencies {
 				case "NetStream.Buffer.Full":
 					bufferFull.dispatch();
 					break;
+			}
+		}
+		
+		private function handleEnterFrame(event : Event) : void {
+			if (getPercentLoaded() == 1) {
+				loaded.dispatch();
+				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 		}
 	}
