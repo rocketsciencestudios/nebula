@@ -63,11 +63,13 @@ package rss.nebula.text {
 			parseXML(LoaderMax.getContent(PRELOAD_NAME));
 		}
 
-		private function parseXML(inXML : XML) : void {
-			for each (var node : XML in inXML.text) {
-				var text : TextVO = new TextVO();
-				text.parseXML(node);
-				_textById[text.id] = text;
+		private function parseXML(xml : XML) : void {
+			if (xml is XML) {
+				for each (var node : XML in xml.text) {
+					var text : TextVO = new TextVO();
+					text.parseXML(node);
+					_textById[text.id] = text;
+				}
 			}
 		}
 	}
