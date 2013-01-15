@@ -220,6 +220,10 @@ package rss.nebula.video {
 			hideControlsDelayed();
 		}
 
+		public function get isPlaying() : Boolean {
+			return _video.isPlaying();
+		}
+
 		private function toggleMute() : void {
 			_muted = !_muted;
 			_video.volume = _muted ? 0 : 1;
