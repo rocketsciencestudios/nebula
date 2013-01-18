@@ -1,4 +1,5 @@
 package rss.nebula.video.dependencies {
+	import rss.nebula.display.FixedDimensionsSprite;
 	import flash.media.StageVideo;
 	import org.osflash.signals.Signal;
 
@@ -13,13 +14,11 @@ package rss.nebula.video.dependencies {
 	/**
 	 * @author Ralph Kuijpers (c) RocketScienceStudios.com
 	 */
-	public class BaseVideoController extends Sprite {
+	public class BaseVideoController extends FixedDimensionsSprite {
 		public static var PLAYING : Number = 0;
 		public static var PAUSED : Number = 1;
 		public static var STOPPED : Number = 2;
 		//
-		public var videoWidth : Number = 0;
-		public var videoHeight : Number = 0;
 		public var videoFPS : Number;
 		public var videoDuration : Number;
 		public var loop : Boolean = false;
@@ -34,7 +33,7 @@ package rss.nebula.video.dependencies {
 		public var playbackCompleted : Signal = new Signal();
 		public var loaded : Signal = new Signal();
 		//
-		protected var _videoObject : Video;
+		protected var _videoObject : *;
 		private var _connection : NetConnection;
 		private var _stream : NetStream;
 		private var _listener : Object;
@@ -49,9 +48,9 @@ package rss.nebula.video.dependencies {
 		 * @param		.loop				Boolean				If ture the video will loop once finished
 		 * @param		.autoSize			Boolean				If true the container will resize to the video size
 		 */
-		public function BaseVideoController(videoObject : *, width : Number, height : Number, initObj : Object = null) {
+		public function BaseVideoController(width : Number, height : Number, videoObject : *, initObj : Object = null) {
+			super(width, height);
 			_videoObject = videoObject;
-			setSize(width, height);
 
 			// applying all the initObj values to the class
 			if (initObj)
@@ -142,11 +141,6 @@ package rss.nebula.video.dependencies {
 		public function set smoothing(value : Boolean) : void {
 		}
 
-		public function setSize(width : Number, height : Number) : void {
-			videoWidth = width;
-			videoHeight = height;
-		}
-
 		// .. EVENTS ..............................................................................................
 		protected function onMetaData(metadata : Object) : void {
 			/*
@@ -161,11 +155,9 @@ package rss.nebula.video.dependencies {
 			if (status == BaseVideoController.STOPPED)
 				_stream.pause();
 
-			if (!autoSize) {
-				setSize(videoWidth, videoHeight);
-			} else {
-				videoWidth = metadata.width;
-				videoHeight = metadata.height;
+			if (autoSize) {
+				width = metadata.width;
+				height = metadata.height;
 			}
 
 			metaReceived.dispatch();

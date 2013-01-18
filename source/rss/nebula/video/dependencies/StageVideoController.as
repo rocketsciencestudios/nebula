@@ -8,7 +8,7 @@ package rss.nebula.video.dependencies {
 	 */
 	public class StageVideoController extends BaseVideoController {
 		public function StageVideoController(width : Number = 320, height : Number = 240) {
-			super(new StageVideo(), width, height);
+			super(width, height, new StageVideo());
 			video.addEventListener(StageVideoEvent.RENDER_STATE, handleRenderState);
 		}
 
@@ -16,12 +16,8 @@ package rss.nebula.video.dependencies {
 			return _videoObject as StageVideo;
 		}
 
-		override public function setSize(width : Number, height : Number) : void {
-			super.setSize(width, height);
-		}
-
 		private function handleRenderState(event : StageVideoEvent) : void {
-			video.viewPort = new Rectangle(0, 0, videoWidth, videoHeight);
+			video.viewPort = new Rectangle(x, y, width, height);
 		}
 	}
 }

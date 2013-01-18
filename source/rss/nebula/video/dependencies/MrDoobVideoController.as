@@ -28,7 +28,7 @@ package rss.nebula.video.dependencies {
 
 	public class MrDoobVideoController extends BaseVideoController {
 		public function MrDoobVideoController(width : Number = 320, height : Number = 240) {
-			super(new Video(width, height), width, height);
+			super(width, height, new Video(width, height));
 
 			addChild(video);
 			video.smoothing = true;
@@ -45,12 +45,6 @@ package rss.nebula.video.dependencies {
 
 		override public function set smoothing(value : Boolean) : void {
 			video.smoothing = value;
-		}
-
-		override public function setSize(width : Number, height : Number) : void {
-			super.setSize(width, height);
-			video.width = width;
-			video.height = height;
 		}
 	}
 }
