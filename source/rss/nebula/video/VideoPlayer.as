@@ -1,4 +1,10 @@
 package rss.nebula.video {
+	import rss.nebula.video.dependencies.StageVideoController;
+
+	import flash.media.StageVideoAvailability;
+	import flash.events.StageVideoAvailabilityEvent;
+
+	import rss.nebula.display.FixedDimensionsSprite;
 	import rss.nebula.video.dependencies.BaseVideoController;
 	import rss.nebula.video.dependencies.MrDoobVideoController;
 	import rss.nebula.video.plugins.IVideoControl;
@@ -22,7 +28,7 @@ package rss.nebula.video {
 	/**
 	 * @author Eric-Paul Lecluse (c) epologee.com
 	 */
-	public class VideoPlayer extends Sprite {
+	public class VideoPlayer extends FixedDimensionsSprite {
 		public var videoPlayed : Signal = new Signal();
 		public var videoPaused : Signal = new Signal();
 		public var videoLoaded : Signal = new Signal();
@@ -32,14 +38,14 @@ package rss.nebula.video {
 		public var panelShown : Signal = new Signal();
 		public var panelHidden : Signal = new Signal();
 		//
-		private var _video : MrDoobVideoController;
+		private var _videoController : BaseVideoController;
 		private var _muted : Boolean;
 		private var _timeout : TimeDelay;
 		private var _controls : Array;
 		//
-		private var _width : Number;	
-		private var _height : Number;
 		private var _autoHideControls : Boolean;
+		private var _callbackVideoPlayerReady : Function;
+		private var _stageVideoScale : Number;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -58,35 +64,65 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-
-		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false) {
+		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false, onVideoPlayerReady : Function = null, stageVideoScale : Number = 1.0) {
+			super(width, height);
 			_autoHideControls = autoHideControls;
-			_height = height;
-			_width = width;
 
 			_controls = [];
-			
+			_callbackVideoPlayerReady = onVideoPlayerReady;
+			_stageVideoScale = stageVideoScale;
+
 			if (useStageVideo) {
-				
+				addEventListener(Event.ADDED_TO_STAGE, function(event : Event) : void {
+					stage.addEventListener(StageVideoAvailabilityEvent.STAGE_VIDEO_AVAILABILITY, handleStageVideoAvailabilityEvent);
+				});
 			} else {
-				_video = new MrDoobVideoController(width, height);
-				Draw.rectangle(_video, width, height, 0);
+				initializeVideo("disabled");
 			}
-
-			_video.playbackStarted.add(handlePlaybackStarted);
-			_video.playbackCompleted.add(updateButtons);
-			_video.playbackCompleted.add(playbackFinished.dispatch);
-			_video.loaded.add(videoLoaded.dispatch);
-			_video.bufferFull.add(debug);
-			_video.metaReceived.add(videoMetaReceived.dispatch);
-			if (_autoHideControls) {
-				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
-				_video.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
-			}
-
-			addChild(_video);
 
 			_timeout = new TimeDelay(hideControls, 2500, null, false, false);
+		}
+
+		override public function set x(value : Number) : void {
+			super.x = value;
+			_videoController.x = value;
+		}
+
+		override public function set y(value : Number) : void {
+			super.y = value;
+			_videoController.y = value;
+		}
+
+		private function handleStageVideoAvailabilityEvent(event : StageVideoAvailabilityEvent) : void {
+			initializeVideo(event.availability);
+		}
+
+		private function initializeVideo(stageVideoAvailability : String) : void {
+			if (stageVideoAvailability == StageVideoAvailability.AVAILABLE) {
+				fatal("using stage video");
+				_videoController = new StageVideoController(width, height, stage, _stageVideoScale);
+			} else {
+				fatal("NOT using stage video: " + stageVideoAvailability);
+				_videoController = new MrDoobVideoController(width, height);
+				Draw.rectangle(_videoController, width, height, 0);
+			}
+
+			_videoController.playbackStarted.add(handlePlaybackStarted);
+			_videoController.playbackCompleted.add(updateButtons);
+			_videoController.playbackCompleted.add(playbackFinished.dispatch);
+			_videoController.loaded.add(videoLoaded.dispatch);
+			_videoController.bufferFull.add(debug);
+			_videoController.metaReceived.add(videoMetaReceived.dispatch);
+			if (_autoHideControls) {
+				_videoController.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
+				_videoController.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
+			}
+
+			addChild(_videoController);
+
+			if (_callbackVideoPlayerReady != null) {
+				_callbackVideoPlayerReady();
+			}
 		}
 
 		public function plugInControl(control : IVideoControl) : void {
@@ -119,9 +155,9 @@ package rss.nebula.video {
 				control.addEventListener(FocusEvent.FOCUS_OUT, triggerControlsToHide);
 			}
 		}
-		
+
 		public function set loop(value : Boolean) : void {
-			_video.loop = value;
+			_videoController.loop = value;
 		}
 
 		public function get inactivityTimeout() : int {
@@ -132,49 +168,56 @@ package rss.nebula.video {
 			_timeout.delay = inactivityTimeout;
 		}
 
-//		override public function get width() : Number {
-//			return _width;
-//		}
-//
-//		override public function get height() : Number {
-//			return _height;
-//		}
-
+		// override public function get width() : Number {
+		// return _width;
+		// }
+		//
+		// override public function get height() : Number {
+		// return _height;
+		// }
 		public function loadAndPlay(url : String) : void {
-			_video.load(url);
-			_video.play();
+			_videoController.load(url);
+			_videoController.play();
 		}
-		
+
 		public function load(url : String) : void {
-			_video.load(url);
+			_videoController.load(url);
 		}
 
 		public function stopAndClear() : void {
-			_video.seek(0);
-			_video.pause();
-			_video.close();
+			_videoController.seek(0);
+			_videoController.pause();
+			_videoController.close();
 		}
-		
+
 		public function resetAndPause() : void {
-			_video.seek(0);
-			_video.pause();
+			_videoController.seek(0);
+			_videoController.pause();
 			videoPaused.dispatch();
 		}
-		
+
 		public function pause() : void {
-			_video.pause();
-			videoPaused.dispatch();
-			updateButtons();
+			var pauseVideoController : Function = function() : void {
+				_videoController.pause();
+				videoPaused.dispatch();
+				updateButtons();
+			};
+			
+			if (_videoController.netstreamStarted) {
+				pauseVideoController();
+			} else {
+				_videoController.playbackStarted.addOnce(pauseVideoController);
+			}
 		}
-		
+
 		public function resume() : void {
-			_video.resume();
+			_videoController.resume();
 			videoPlayed.dispatch();
 			updateButtons();
 		}
-		
+
 		public function seek(value : Number) : void {
-			_video.seek(value);
+			_videoController.seek(value);
 		}
 
 		private function handlePlaybackStarted() : void {
@@ -227,32 +270,32 @@ package rss.nebula.video {
 		}
 
 		public function get isPlaying() : Boolean {
-			return _video.isPlaying();
+			return _videoController.isPlaying();
 		}
 
 		private function toggleMute() : void {
 			_muted = !_muted;
-			_video.volume = _muted ? 0 : 1;
+			_videoController.volume = _muted ? 0 : 1;
 
 			updateButtons();
 		}
-		
+
 		private function handleVolumeChanged(value : Number) : void {
-			_video.volume = value;
-			
+			_videoController.volume = value;
+
 			updateButtons();
 		}
 
 		private function togglePlayback() : void {
-			if (_video.isPlaying()) {
-				_video.pause();
+			if (_videoController.isPlaying()) {
+				_videoController.pause();
 				videoPaused.dispatch();
-			} else if (_video.status >= BaseVideoController.STOPPED) {
+			} else if (_videoController.status >= BaseVideoController.STOPPED) {
 				// replay
-				_video.play(0);
+				_videoController.play(0);
 				videoPlayed.dispatch();
 			} else {
-				_video.resume();
+				_videoController.resume();
 				videoPlayed.dispatch();
 			}
 
@@ -260,11 +303,11 @@ package rss.nebula.video {
 		}
 
 		private function handleScrubbed(percent : Number) : void {
-			if(_video.status >= BaseVideoController.STOPPED) {
-				_video.status = BaseVideoController.PLAYING;
+			if (_videoController.status >= BaseVideoController.STOPPED) {
+				_videoController.status = BaseVideoController.PLAYING;
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
-			_video.seek(percent);
+			_videoController.seek(percent);
 			updateButtons();
 		}
 
@@ -278,7 +321,7 @@ package rss.nebula.video {
 				}
 			}
 
-			if (_video.isPlaying()) {
+			if (_videoController.isPlaying()) {
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			} else {
 				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
@@ -286,7 +329,7 @@ package rss.nebula.video {
 
 			var playbackToggles : Array = controlsWithInterface(IVideoPlaybackToggle);
 			for each (var playbackToggle : IVideoPlaybackToggle in playbackToggles) {
-				if (_video.isPlaying()) {
+				if (_videoController.isPlaying()) {
 					playbackToggle.select();
 				} else {
 					playbackToggle.deselect();
@@ -296,9 +339,9 @@ package rss.nebula.video {
 
 		private function handleEnterFrame(event : Event) : void {
 			var slider : IVideoScrubSlider = IVideoScrubSlider(controlsWithInterface(IVideoScrubSlider, 1)[0]);
-			if(!slider) return;
-			slider.buffer = _video.getPercentLoaded();
-			slider.position = _video.getPercentPlayed();
+			if (!slider) return;
+			slider.buffer = _videoController.getPercentLoaded();
+			slider.position = _videoController.getPercentPlayed();
 		}
 
 		private function interfaceOfControl(control : IVideoControl) : Class {
@@ -321,27 +364,27 @@ package rss.nebula.video {
 
 			return matching;
 		}
-		
+
 		public function set volume(volume : Number) : void {
-			_video.volume = volume;
+			_videoController.volume = volume;
 		}
-		
+
 		public function get volume() : Number {
-			return _video.volume;
+			return _videoController.volume;
 		}
-		
-		public function videoDuration() : Number{
-			return _video.videoDuration;
+
+		public function videoDuration() : Number {
+			return _videoController.videoDuration;
 		}
-		
-		public function percentLoaded() : Number{
-			return _video.getPercentLoaded();
+
+		public function percentLoaded() : Number {
+			return _videoController.getPercentLoaded();
 		}
-		
-		public function percentPlayed() : Number{
-			return _video.getPercentPlayed();
+
+		public function percentPlayed() : Number {
+			return _videoController.getPercentPlayed();
 		}
-		
+
 		public function get timePlayed() : Number {
 			return videoDuration() * percentPlayed();
 		}

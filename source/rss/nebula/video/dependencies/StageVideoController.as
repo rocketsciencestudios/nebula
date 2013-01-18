@@ -1,4 +1,5 @@
 package rss.nebula.video.dependencies {
+	import flash.display.Stage;
 	import flash.events.StageVideoEvent;
 	import flash.geom.Rectangle;
 	import flash.media.StageVideo;
@@ -7,8 +8,13 @@ package rss.nebula.video.dependencies {
 	 * @author Ralph Kuijpers (c) RocketScienceStudios.com
 	 */
 	public class StageVideoController extends BaseVideoController {
-		public function StageVideoController(width : Number = 320, height : Number = 240) {
-			super(width, height, new StageVideo());
+		private var _stageVideoScale : Number;
+		private var _x : Number = 0;
+		private var _y : Number = 0;
+
+		public function StageVideoController(width : Number, height : Number, stage : Stage, stageVideoScale : Number = 1.0) {
+			_stageVideoScale = stageVideoScale;
+			super(width, height, stage.stageVideos[0]);
 			video.addEventListener(StageVideoEvent.RENDER_STATE, handleRenderState);
 		}
 
@@ -16,8 +22,18 @@ package rss.nebula.video.dependencies {
 			return _videoObject as StageVideo;
 		}
 
-		private function handleRenderState(event : StageVideoEvent) : void {
-			video.viewPort = new Rectangle(x, y, width, height);
+		private function handleRenderState(...ignore) : void {
+			video.viewPort = new Rectangle(_x * _stageVideoScale, _y * _stageVideoScale, width * _stageVideoScale, height * _stageVideoScale);
+		}
+
+		override public function set x(value : Number) : void {
+			_x = value;
+			handleRenderState();
+		}
+
+		override public function set y(value : Number) : void {
+			_y = value;
+			handleRenderState();
 		}
 	}
 }

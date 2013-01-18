@@ -1,13 +1,11 @@
 package rss.nebula.video.dependencies {
 	import rss.nebula.display.FixedDimensionsSprite;
-	import flash.media.StageVideo;
+
 	import org.osflash.signals.Signal;
 
-	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.NetStatusEvent;
 	import flash.media.SoundTransform;
-	import flash.media.Video;
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 
@@ -37,8 +35,9 @@ package rss.nebula.video.dependencies {
 		private var _connection : NetConnection;
 		private var _stream : NetStream;
 		private var _listener : Object;
-		//
+		public var netstreamStarted : Boolean;
 
+		//
 		/**
 		 * Creates a Video Controller
 		 *
@@ -70,6 +69,14 @@ package rss.nebula.video.dependencies {
 			_stream.client = _listener;
 		}
 
+		override public function set x(value : Number) : void {
+			// do not alter the position in this class.
+		}
+
+		override public function set y(value : Number) : void {
+			// do not alter the position in this class.
+		}
+
 		// .. CONTROL METHODS .............................................................................
 		public function load(file : String = null) : void {
 			addEventListener(Event.ENTER_FRAME, handleEnterFrame);
@@ -83,7 +90,7 @@ package rss.nebula.video.dependencies {
 			// stream.play(file);
 			status = BaseVideoController.PLAYING;
 		}
-		
+
 		public function seek(percent : Number) : void {
 			var position : Number = percent * videoDuration;
 			_stream.seek(position);
@@ -93,7 +100,7 @@ package rss.nebula.video.dependencies {
 			if (_stream.time >= videoDuration) {
 				_stream.seek(0);
 			}
-			
+
 			_stream.resume();
 			status = BaseVideoController.PLAYING;
 		}
@@ -164,9 +171,10 @@ package rss.nebula.video.dependencies {
 		}
 
 		protected function netStatusHandler(event : NetStatusEvent) : void {
-//			debug("event.info.code: "+event.info.code);
+			// debug("event.info.code: "+event.info.code);
 			switch(event.info.code) {
 				case "NetStream.Play.Start":
+					netstreamStarted = true;
 					playbackStarted.dispatch();
 					break;
 				case "NetStream.Play.Stop":
@@ -182,13 +190,12 @@ package rss.nebula.video.dependencies {
 					break;
 			}
 		}
-		
+
 		private function handleEnterFrame(event : Event) : void {
 			if (getPercentLoaded() == 1) {
 				loaded.dispatch();
 				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 		}
-
 	}
 }
