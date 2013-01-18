@@ -1,4 +1,5 @@
 package rss.nebula.video {
+	import rss.nebula.video.dependencies.BaseVideoController;
 	import rss.nebula.video.dependencies.MrDoobVideoController;
 	import rss.nebula.video.plugins.IVideoControl;
 	import rss.nebula.video.plugins.IVideoMuteToggle;
@@ -57,15 +58,20 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true) {
+
+		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false) {
 			_autoHideControls = autoHideControls;
 			_height = height;
 			_width = width;
 
 			_controls = [];
-
-			_video = new MrDoobVideoController(width, height);
-			Draw.rectangle(_video, width, height, 0);
+			
+			if (useStageVideo) {
+				
+			} else {
+				_video = new MrDoobVideoController(width, height);
+				Draw.rectangle(_video, width, height, 0);
+			}
 
 			_video.playbackStarted.add(handlePlaybackStarted);
 			_video.playbackCompleted.add(updateButtons);
@@ -241,7 +247,7 @@ package rss.nebula.video {
 			if (_video.isPlaying()) {
 				_video.pause();
 				videoPaused.dispatch();
-			} else if (_video.status >= MrDoobVideoController.STOPPED) {
+			} else if (_video.status >= BaseVideoController.STOPPED) {
 				// replay
 				_video.play(0);
 				videoPlayed.dispatch();
@@ -254,8 +260,8 @@ package rss.nebula.video {
 		}
 
 		private function handleScrubbed(percent : Number) : void {
-			if(_video.status >= MrDoobVideoController.STOPPED) {
-				_video.status = MrDoobVideoController.PLAYING;
+			if(_video.status >= BaseVideoController.STOPPED) {
+				_video.status = BaseVideoController.PLAYING;
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 			_video.seek(percent);
