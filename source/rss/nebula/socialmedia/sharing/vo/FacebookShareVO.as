@@ -3,7 +3,7 @@ package rss.nebula.socialmedia.sharing.vo {
 	 * @author Michiel van der Plas @ Rocket Science Studios
 	 */
 	public class FacebookShareVO extends AbstractSocialShareVO implements ISocialShare {
-		private var _url : String = '';
+		private var _url : String = "";
 		
 		override public function get url() : String {
 			return _url;

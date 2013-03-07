@@ -1,12 +1,8 @@
 package rss.nebula.video {
-	import rss.nebula.video.dependencies.StageVideoController;
-
-	import flash.media.StageVideoAvailability;
-	import flash.events.StageVideoAvailabilityEvent;
-
 	import rss.nebula.display.FixedDimensionsSprite;
 	import rss.nebula.video.dependencies.BaseVideoController;
 	import rss.nebula.video.dependencies.MrDoobVideoController;
+	import rss.nebula.video.dependencies.StageVideoController;
 	import rss.nebula.video.plugins.IVideoControl;
 	import rss.nebula.video.plugins.IVideoMuteToggle;
 	import rss.nebula.video.plugins.IVideoPanel;
@@ -20,10 +16,12 @@ package rss.nebula.video {
 	import org.osflash.signals.Signal;
 
 	import flash.display.DisplayObject;
-	import flash.display.Sprite;
+	import flash.display.Stage;
 	import flash.events.Event;
 	import flash.events.FocusEvent;
 	import flash.events.MouseEvent;
+	import flash.events.StageVideoAvailabilityEvent;
+	import flash.media.StageVideoAvailability;
 
 	/**
 	 * @author Eric-Paul Lecluse (c) epologee.com
@@ -46,6 +44,7 @@ package rss.nebula.video {
 		private var _autoHideControls : Boolean;
 		private var _callbackVideoPlayerReady : Function;
 		private var _stageVideoScale : Number;
+		private var _stageVideoIndex : int;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -64,7 +63,9 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false, onVideoPlayerReady : Function = null, stageVideoScale : Number = 1.0) {
+
+		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false, onVideoPlayerReady : Function = null, stageVideoScale : Number = 1.0, stageVideoIndex : int = 0) {
+			_stageVideoIndex = stageVideoIndex;
 			super(width, height);
 			_autoHideControls = autoHideControls;
 
@@ -94,15 +95,20 @@ package rss.nebula.video {
 		}
 
 		private function handleStageVideoAvailabilityEvent(event : StageVideoAvailabilityEvent) : void {
-			initializeVideo(event.availability);
+			debug("event.target: " + event.target);
+			var stageObject : Stage = event.target as Stage;
+			initializeVideo(event.availability, stageObject);
 		}
 
-		private function initializeVideo(stageVideoAvailability : String) : void {
+		private function initializeVideo(stageVideoAvailability : String, stageObject : Stage = null) : void {
+			var stageVideoUsed : Boolean;
 			if (stageVideoAvailability == StageVideoAvailability.AVAILABLE) {
-				fatal("using stage video");
-				_videoController = new StageVideoController(width, height, stage, _stageVideoScale);
+				fatal("use stage video");
+				stageVideoUsed = true;
+				_videoController = new StageVideoController(width, height, stageObject, _stageVideoScale, _stageVideoIndex);
 			} else {
 				fatal("NOT using stage video: " + stageVideoAvailability);
+				stageVideoUsed = false;
 				_videoController = new MrDoobVideoController(width, height);
 				Draw.rectangle(_videoController, width, height, 0);
 			}
@@ -121,7 +127,7 @@ package rss.nebula.video {
 			addChild(_videoController);
 
 			if (_callbackVideoPlayerReady != null) {
-				_callbackVideoPlayerReady();
+				_callbackVideoPlayerReady(stageVideoUsed);
 			}
 		}
 
@@ -178,6 +184,7 @@ package rss.nebula.video {
 		public function loadAndPlay(url : String) : void {
 			_videoController.load(url);
 			_videoController.play();
+			fatal("load & play video");
 		}
 
 		public function load(url : String) : void {
@@ -197,17 +204,18 @@ package rss.nebula.video {
 		}
 
 		public function pause() : void {
-			var pauseVideoController : Function = function() : void {
-				_videoController.pause();
-				videoPaused.dispatch();
-				updateButtons();
-			};
-			
-			if (_videoController.netstreamStarted) {
-				pauseVideoController();
-			} else {
-				_videoController.playbackStarted.addOnce(pauseVideoController);
-			}
+			pauseVideoController();
+//			if (_videoController.netstreamStarted) {
+//			} else {
+//				_videoController.playbackStarted.addOnce(pauseVideoController);
+//			}
+		}
+		
+		private function pauseVideoController() : void {
+			fatal("pause video");
+			_videoController.pause();
+			videoPaused.dispatch();
+			updateButtons();
 		}
 
 		public function resume() : void {

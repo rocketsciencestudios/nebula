@@ -12,9 +12,9 @@ package rss.nebula.video.dependencies {
 		private var _x : Number = 0;
 		private var _y : Number = 0;
 
-		public function StageVideoController(width : Number, height : Number, stage : Stage, stageVideoScale : Number = 1.0) {
+		public function StageVideoController(width : Number, height : Number, stage : Stage, stageVideoScale : Number = 1.0, videoIndex : int = 0) {
 			_stageVideoScale = stageVideoScale;
-			super(width, height, stage.stageVideos[0]);
+			super(width, height, stage.stageVideos[videoIndex]);
 			video.addEventListener(StageVideoEvent.RENDER_STATE, handleRenderState);
 		}
 
@@ -24,6 +24,9 @@ package rss.nebula.video.dependencies {
 
 		private function handleRenderState(...ignore) : void {
 			video.viewPort = new Rectangle(_x * _stageVideoScale, _y * _stageVideoScale, width * _stageVideoScale, height * _stageVideoScale);
+			debug("height * _stageVideoScale: " + (height * _stageVideoScale));
+			debug("width * _stageVideoScale: " + (width * _stageVideoScale));
+			debug("video.viewPort: " + video.viewPort);
 		}
 
 		override public function set x(value : Number) : void {
