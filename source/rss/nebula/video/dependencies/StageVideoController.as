@@ -24,9 +24,16 @@ package rss.nebula.video.dependencies {
 
 		private function handleRenderState(...ignore) : void {
 			video.viewPort = new Rectangle(_x * _stageVideoScale, _y * _stageVideoScale, width * _stageVideoScale, height * _stageVideoScale);
-			debug("height * _stageVideoScale: " + (height * _stageVideoScale));
-			debug("width * _stageVideoScale: " + (width * _stageVideoScale));
-			debug("video.viewPort: " + video.viewPort);
+		}
+		
+		override public function set width(value : Number) : void {
+			super.width = value;
+			if (video) handleRenderState();
+		}
+		
+		override public function set height(value : Number) : void {
+			super.height = value;
+			if (video) handleRenderState();
 		}
 
 		override public function set x(value : Number) : void {

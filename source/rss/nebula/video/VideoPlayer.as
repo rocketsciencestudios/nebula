@@ -93,9 +93,18 @@ package rss.nebula.video {
 			super.y = value;
 			_videoController.y = value;
 		}
+		
+		override public function set width(value : Number) : void {
+			super.width = value;
+			if (_videoController) _videoController.width = value;
+		}
+		
+		override public function set height(value : Number) : void {
+			super.height = value;
+			if (_videoController) _videoController.height = value;
+		}
 
 		private function handleStageVideoAvailabilityEvent(event : StageVideoAvailabilityEvent) : void {
-			debug("event.target: " + event.target);
 			var stageObject : Stage = event.target as Stage;
 			initializeVideo(event.availability, stageObject);
 		}
@@ -173,18 +182,10 @@ package rss.nebula.video {
 		public function set inactivityTimeout(inactivityTimeout : int) : void {
 			_timeout.delay = inactivityTimeout;
 		}
-
-		// override public function get width() : Number {
-		// return _width;
-		// }
-		//
-		// override public function get height() : Number {
-		// return _height;
-		// }
+		
 		public function loadAndPlay(url : String) : void {
 			_videoController.load(url);
 			_videoController.play();
-			fatal("load & play video");
 		}
 
 		public function load(url : String) : void {
@@ -212,7 +213,6 @@ package rss.nebula.video {
 		}
 		
 		private function pauseVideoController() : void {
-			fatal("pause video");
 			_videoController.pause();
 			videoPaused.dispatch();
 			updateButtons();
