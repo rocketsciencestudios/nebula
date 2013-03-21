@@ -18,7 +18,7 @@ package rss.nebula.video.dependencies {
 			video.addEventListener(StageVideoEvent.RENDER_STATE, handleRenderState);
 		}
 
-		public function get video() : StageVideo {
+		override public function get video() : * {
 			return _videoObject as StageVideo;
 		}
 

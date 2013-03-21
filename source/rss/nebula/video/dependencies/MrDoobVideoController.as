@@ -34,7 +34,7 @@ package rss.nebula.video.dependencies {
 			video.smoothing = true;
 		}
 
-		public function get video() : Video {
+		override public function get video() : * {
 			return _videoObject as Video;
 		}
 

@@ -381,7 +381,7 @@ package rss.nebula.video {
 			return _videoController.volume;
 		}
 
-		public function videoDuration() : Number {
+		public function get videoDuration() : Number {
 			return _videoController.videoDuration;
 		}
 
@@ -394,7 +394,11 @@ package rss.nebula.video {
 		}
 
 		public function get timePlayed() : Number {
-			return videoDuration() * percentPlayed();
+			return videoDuration * percentPlayed();
+		}
+		
+		public function get videoObject() : DisplayObject {
+			return _videoController;
 		}
 	}
 }

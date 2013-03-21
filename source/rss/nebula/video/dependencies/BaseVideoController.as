@@ -197,5 +197,9 @@ package rss.nebula.video.dependencies {
 				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 		}
+		
+		public function get video() : * {
+			return _videoObject;
+		}
 	}
 }
