@@ -45,6 +45,7 @@ package rss.nebula.video {
 		private var _callbackVideoPlayerReady : Function;
 		private var _stageVideoScale : Number;
 		private var _stageVideoIndex : int;
+		private var _disabled : Boolean;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -63,7 +64,6 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
-
 		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false, onVideoPlayerReady : Function = null, stageVideoScale : Number = 1.0, stageVideoIndex : int = 0) {
 			_stageVideoIndex = stageVideoIndex;
 			super(width, height);
@@ -93,12 +93,12 @@ package rss.nebula.video {
 			super.y = value;
 			_videoController.y = value;
 		}
-		
+
 		override public function set width(value : Number) : void {
 			super.width = value;
 			if (_videoController) _videoController.width = value;
 		}
-		
+
 		override public function set height(value : Number) : void {
 			super.height = value;
 			if (_videoController) _videoController.height = value;
@@ -126,7 +126,7 @@ package rss.nebula.video {
 			_videoController.playbackCompleted.add(updateButtons);
 			_videoController.playbackCompleted.add(playbackFinished.dispatch);
 			_videoController.loaded.add(videoLoaded.dispatch);
-			_videoController.bufferFull.add(debug);
+//			_videoController.bufferFull.add(debug);
 			_videoController.metaReceived.add(videoMetaReceived.dispatch);
 			if (_autoHideControls) {
 				_videoController.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
@@ -145,6 +145,12 @@ package rss.nebula.video {
 			var addTriggers : Boolean = false;
 
 			switch(interfaceOfControl(control)) {
+				case IVideoPanel:
+					if (_autoHideControls) {
+						control.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
+						control.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToHide);
+					}
+					break;
 				case IVideoScrubSlider:
 					IVideoScrubSlider(control).scrubbed.add(handleScrubbed);
 					addTriggers = true;
@@ -169,6 +175,8 @@ package rss.nebula.video {
 				control.addEventListener(FocusEvent.FOCUS_IN, triggerControlsToShow);
 				control.addEventListener(FocusEvent.FOCUS_OUT, triggerControlsToHide);
 			}
+			
+			updateButtons();
 		}
 
 		public function set loop(value : Boolean) : void {
@@ -182,7 +190,7 @@ package rss.nebula.video {
 		public function set inactivityTimeout(inactivityTimeout : int) : void {
 			_timeout.delay = inactivityTimeout;
 		}
-		
+
 		public function loadAndPlay(url : String) : void {
 			_videoController.load(url);
 			_videoController.play();
@@ -206,12 +214,12 @@ package rss.nebula.video {
 
 		public function pause() : void {
 			pauseVideoController();
-//			if (_videoController.netstreamStarted) {
-//			} else {
-//				_videoController.playbackStarted.addOnce(pauseVideoController);
-//			}
+			// if (_videoController.netstreamStarted) {
+			// } else {
+			// _videoController.playbackStarted.addOnce(pauseVideoController);
+			// }
 		}
-		
+
 		private function pauseVideoController() : void {
 			_videoController.pause();
 			videoPaused.dispatch();
@@ -226,6 +234,7 @@ package rss.nebula.video {
 
 		public function seek(value : Number) : void {
 			_videoController.seek(value);
+			updateButtons();
 		}
 
 		private function handlePlaybackStarted() : void {
@@ -258,6 +267,7 @@ package rss.nebula.video {
 		}
 
 		private function triggerControlsToShow(e : Event) : void {
+			if (_disabled) return;
 			var p : DisplayObject = e.target as DisplayObject;
 			var s : String = "+ ";
 			while (p) {
@@ -330,6 +340,7 @@ package rss.nebula.video {
 			}
 
 			if (_videoController.isPlaying()) {
+				
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			} else {
 				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
@@ -357,6 +368,7 @@ package rss.nebula.video {
 			if (control is IVideoPlaybackToggle) return IVideoPlaybackToggle;
 			if (control is IVideoScrubSlider) return IVideoScrubSlider;
 			if (control is IVideoVolumeControl) return IVideoVolumeControl;
+			if (control is IVideoPanel) return IVideoPanel;
 			return null;
 		}
 
@@ -371,6 +383,14 @@ package rss.nebula.video {
 			}
 
 			return matching;
+		}
+		
+		public function enable() : void {
+			_disabled = false;
+		}
+		
+		public function disable() : void {
+			_disabled = true;
 		}
 
 		public function set volume(volume : Number) : void {
@@ -396,7 +416,7 @@ package rss.nebula.video {
 		public function get timePlayed() : Number {
 			return videoDuration * percentPlayed();
 		}
-		
+
 		public function get videoObject() : DisplayObject {
 			return _videoController;
 		}

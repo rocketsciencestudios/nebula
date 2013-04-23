@@ -33,6 +33,16 @@ package rss.nebula.video.dependencies {
 			addChild(video);
 			video.smoothing = true;
 		}
+		
+		override public function set width(value : Number) : void {
+			super.width = value;
+			if (video) video.width = value;
+		}
+		
+		override public function set height(value : Number) : void {
+			super.height = value;
+			if (video) video.height = value;
+		}
 
 		override public function get video() : * {
 			return _videoObject as Video;
