@@ -26,6 +26,7 @@ package rss.nebula.video.dependencies {
 		// signals
 		public var playbackStarted : Signal = new Signal();
 		public var progress : Signal = new Signal(Number);
+		public var bufferEmpty : Signal = new Signal();
 		public var bufferFull : Signal = new Signal();
 		public var metaReceived : Signal = new Signal();
 		public var playbackCompleted : Signal = new Signal();
@@ -63,6 +64,7 @@ package rss.nebula.video.dependencies {
 			_stream = new NetStream(_connection);
 			_stream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
 			_videoObject.attachNetStream(_stream);
+			_stream.bufferTime = 5;
 
 			_listener = new Object();
 			_listener.onMetaData = onMetaData;
@@ -154,7 +156,6 @@ package rss.nebula.video.dependencies {
 			for (var i:String in metadata)
 			trace(i + ": " + metadata[i]);
 			 */
-			debug("metadata: " + metadata.duration);
 			videoDuration = metadata.duration;
 			videoFPS = metadata.framerate;
 
@@ -171,7 +172,7 @@ package rss.nebula.video.dependencies {
 		}
 
 		protected function netStatusHandler(event : NetStatusEvent) : void {
-			// debug("event.info.code: "+event.info.code);
+			debug("event.info.code: " + event.info.code);
 			switch(event.info.code) {
 				case "NetStream.Play.Start":
 					netstreamStarted = true;
@@ -185,6 +186,9 @@ package rss.nebula.video.dependencies {
 						playbackCompleted.dispatch();
 					}
 					break;
+				case "NetStream.Buffer.Empty":
+					 bufferEmpty.dispatch();
+					break;
 				case "NetStream.Buffer.Full":
 					bufferFull.dispatch();
 					break;
@@ -197,7 +201,7 @@ package rss.nebula.video.dependencies {
 				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 		}
-		
+
 		public function get video() : * {
 			return _videoObject;
 		}

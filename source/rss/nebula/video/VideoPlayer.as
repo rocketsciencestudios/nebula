@@ -35,6 +35,7 @@ package rss.nebula.video {
 		public var playbackStarted : Signal = new Signal();
 		public var panelShown : Signal = new Signal();
 		public var panelHidden : Signal = new Signal();
+		public var sought : Signal = new Signal(Number);
 		//
 		private var _videoController : BaseVideoController;
 		private var _muted : Boolean;
@@ -46,6 +47,7 @@ package rss.nebula.video {
 		private var _stageVideoScale : Number;
 		private var _stageVideoIndex : int;
 		private var _disabled : Boolean;
+		private var _bufferEmpty : Boolean;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -126,7 +128,8 @@ package rss.nebula.video {
 			_videoController.playbackCompleted.add(updateButtons);
 			_videoController.playbackCompleted.add(playbackFinished.dispatch);
 			_videoController.loaded.add(videoLoaded.dispatch);
-//			_videoController.bufferFull.add(debug);
+			_videoController.bufferEmpty.add(handleBufferEmpty);
+			_videoController.bufferFull.add(handleBufferFull);
 			_videoController.metaReceived.add(videoMetaReceived.dispatch);
 			if (_autoHideControls) {
 				_videoController.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
@@ -233,6 +236,7 @@ package rss.nebula.video {
 		}
 
 		public function seek(value : Number) : void {
+			sought.dispatch(value);
 			_videoController.seek(value);
 			updateButtons();
 		}
@@ -241,6 +245,19 @@ package rss.nebula.video {
 			updateButtons();
 			playbackStarted.dispatch();
 		}
+		
+		private function handleBufferFull() : void {
+			_bufferEmpty = false;
+			if (_videoController.isPlaying()) videoPlayed.dispatch();
+			updateButtons();
+		}
+
+		private function handleBufferEmpty() : void {
+			_bufferEmpty = true;
+			videoPaused.dispatch();
+			updateButtons();
+		}
+		
 
 		public function showControls() : void {
 			_timeout.reset();
@@ -326,6 +343,7 @@ package rss.nebula.video {
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 			_videoController.seek(percent);
+			sought.dispatch(percent);
 			updateButtons();
 		}
 
@@ -339,12 +357,12 @@ package rss.nebula.video {
 				}
 			}
 
-			if (_videoController.isPlaying()) {
-				
-				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
-			} else {
-				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
-			}
+			addEventListener(Event.ENTER_FRAME, handleEnterFrame);
+//			if (_videoController.isPlaying()) {
+//				
+//			} else {
+//				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
+//			}
 
 			var playbackToggles : Array = controlsWithInterface(IVideoPlaybackToggle);
 			for each (var playbackToggle : IVideoPlaybackToggle in playbackToggles) {
@@ -360,7 +378,7 @@ package rss.nebula.video {
 			var slider : IVideoScrubSlider = IVideoScrubSlider(controlsWithInterface(IVideoScrubSlider, 1)[0]);
 			if (!slider) return;
 			slider.buffer = _videoController.getPercentLoaded();
-			slider.position = _videoController.getPercentPlayed();
+			if (!_bufferEmpty || !isPlaying) slider.position = _videoController.getPercentPlayed();
 		}
 
 		private function interfaceOfControl(control : IVideoControl) : Class {
@@ -419,6 +437,10 @@ package rss.nebula.video {
 
 		public function get videoObject() : DisplayObject {
 			return _videoController;
+		}
+
+		public function get bufferEmpty() : Boolean {
+			return _bufferEmpty;
 		}
 	}
 }
