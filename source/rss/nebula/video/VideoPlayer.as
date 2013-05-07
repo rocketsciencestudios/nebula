@@ -48,6 +48,7 @@ package rss.nebula.video {
 		private var _stageVideoIndex : int;
 		private var _disabled : Boolean;
 		private var _bufferEmpty : Boolean;
+		private var _maxVolume : Number = 1;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -104,6 +105,11 @@ package rss.nebula.video {
 		override public function set height(value : Number) : void {
 			super.height = value;
 			if (_videoController) _videoController.height = value;
+		}
+		
+		public function set maxVolume(value : Number) : void {
+			_maxVolume = value;
+			if (!_muted) volume = _maxVolume;
 		}
 
 		private function handleStageVideoAvailabilityEvent(event : StageVideoAvailabilityEvent) : void {
@@ -310,7 +316,7 @@ package rss.nebula.video {
 
 		private function toggleMute() : void {
 			_muted = !_muted;
-			_videoController.volume = _muted ? 0 : 1;
+			_videoController.volume = _muted ? 0 : _maxVolume;
 
 			updateButtons();
 		}
