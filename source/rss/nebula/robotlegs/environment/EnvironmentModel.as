@@ -151,13 +151,11 @@ package rss.nebula.robotlegs.environment {
 			if (!new RegExp("^https{0,1}:/{2}", "i").test(_loaderURL))
 				return LOCALHOST;
 
-			var domain : RegExp = new RegExp("http:\/\/(?:www\.)?([^\/]+)", "i");
+			var domain : RegExp = new RegExp("http(s?):\/\/(?:www\.)?([^\/]+)", "i");
 			var result : Array = _loaderURL.match(domain);
 			debug("result: " + result);
 			
-			//TODO: fix "https" always returns null;
-			return LOCALHOST;
-			return result[1];
+			return result[2];
 		}
 	}
 }

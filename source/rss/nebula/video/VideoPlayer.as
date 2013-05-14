@@ -36,6 +36,8 @@ package rss.nebula.video {
 		public var panelShown : Signal = new Signal();
 		public var panelHidden : Signal = new Signal();
 		public var sought : Signal = new Signal(Number);
+		public var bufferFull : Signal = new Signal();
+		public var bufferEmpty : Signal = new Signal();
 		//
 		private var _videoController : BaseVideoController;
 		private var _muted : Boolean;
@@ -47,7 +49,7 @@ package rss.nebula.video {
 		private var _stageVideoScale : Number;
 		private var _stageVideoIndex : int;
 		private var _disabled : Boolean;
-		private var _bufferEmpty : Boolean;
+		private var _isBufferEmpty : Boolean;
 		private var _maxVolume : Number = 1;
 
 		/**
@@ -253,13 +255,15 @@ package rss.nebula.video {
 		}
 		
 		private function handleBufferFull() : void {
-			_bufferEmpty = false;
+			bufferFull.dispatch();
+			_isBufferEmpty = false;
 			if (_videoController.isPlaying()) videoPlayed.dispatch();
 			updateButtons();
 		}
 
 		private function handleBufferEmpty() : void {
-			_bufferEmpty = true;
+			bufferEmpty.dispatch();
+			_isBufferEmpty = true;
 			videoPaused.dispatch();
 			updateButtons();
 		}
@@ -384,7 +388,7 @@ package rss.nebula.video {
 			var slider : IVideoScrubSlider = IVideoScrubSlider(controlsWithInterface(IVideoScrubSlider, 1)[0]);
 			if (!slider) return;
 			slider.buffer = _videoController.getPercentLoaded();
-			if (!_bufferEmpty || !isPlaying) slider.position = _videoController.getPercentPlayed();
+			if (!_isBufferEmpty || !isPlaying) slider.position = _videoController.getPercentPlayed();
 		}
 
 		private function interfaceOfControl(control : IVideoControl) : Class {
@@ -445,8 +449,8 @@ package rss.nebula.video {
 			return _videoController;
 		}
 
-		public function get bufferEmpty() : Boolean {
-			return _bufferEmpty;
+		public function get isBufferEmpty() : Boolean {
+			return _isBufferEmpty;
 		}
 	}
 }
