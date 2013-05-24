@@ -35,7 +35,7 @@ package rss.nebula.video {
 		public var playbackStarted : Signal = new Signal();
 		public var panelShown : Signal = new Signal();
 		public var panelHidden : Signal = new Signal();
-		public var sought : Signal = new Signal(Number);
+		public var seekNotify : Signal = new Signal(Number);
 		public var bufferFull : Signal = new Signal();
 		public var bufferEmpty : Signal = new Signal();
 		//
@@ -49,7 +49,7 @@ package rss.nebula.video {
 		private var _stageVideoScale : Number;
 		private var _stageVideoIndex : int;
 		private var _disabled : Boolean;
-		private var _isBufferEmpty : Boolean;
+		private var _isBufferEmpty : Boolean = true;
 		private var _maxVolume : Number = 1;
 
 		/**
@@ -138,6 +138,7 @@ package rss.nebula.video {
 			_videoController.loaded.add(videoLoaded.dispatch);
 			_videoController.bufferEmpty.add(handleBufferEmpty);
 			_videoController.bufferFull.add(handleBufferFull);
+			_videoController.seekNotify.add(handleSeekNotified);
 			_videoController.metaReceived.add(videoMetaReceived.dispatch);
 			if (_autoHideControls) {
 				_videoController.addEventListener(MouseEvent.MOUSE_MOVE, triggerControlsToShow);
@@ -244,7 +245,6 @@ package rss.nebula.video {
 		}
 
 		public function seek(value : Number) : void {
-			sought.dispatch(value);
 			_videoController.seek(value);
 			updateButtons();
 		}
@@ -353,8 +353,11 @@ package rss.nebula.video {
 				addEventListener(Event.ENTER_FRAME, handleEnterFrame);
 			}
 			_videoController.seek(percent);
-			sought.dispatch(percent);
 			updateButtons();
+		}
+		
+		private function handleSeekNotified(value : Number) : void {
+			seekNotify.dispatch(value);
 		}
 
 		private function updateButtons() : void {

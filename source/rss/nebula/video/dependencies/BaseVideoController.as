@@ -26,6 +26,7 @@ package rss.nebula.video.dependencies {
 		// signals
 		public var playbackStarted : Signal = new Signal();
 		public var progress : Signal = new Signal(Number);
+		public var seekNotify : Signal = new Signal(Number);
 		public var bufferEmpty : Signal = new Signal();
 		public var bufferFull : Signal = new Signal();
 		public var metaReceived : Signal = new Signal();
@@ -37,6 +38,7 @@ package rss.nebula.video.dependencies {
 		private var _stream : NetStream;
 		private var _listener : Object;
 		public var netstreamStarted : Boolean;
+		private var _position : Number;
 
 		//
 		/**
@@ -87,15 +89,15 @@ package rss.nebula.video.dependencies {
 		}
 
 		public function play(percent : Number = 0) : void {
-			var position : Number = percent * videoDuration;
-			_stream.seek(position);
+			_position = percent * videoDuration;
+			_stream.seek(_position);
 			// stream.play(file);
 			status = BaseVideoController.PLAYING;
 		}
 
 		public function seek(percent : Number) : void {
-			var position : Number = percent * videoDuration;
-			_stream.seek(position);
+			_position = percent * videoDuration;
+			_stream.seek(_position);
 		}
 
 		public function resume() : void {
@@ -185,6 +187,9 @@ package rss.nebula.video.dependencies {
 						status = BaseVideoController.STOPPED;
 						playbackCompleted.dispatch();
 					}
+					break;
+				case "NetStream.Seek.Notify":
+					 seekNotify.dispatch(_position);
 					break;
 				case "NetStream.Buffer.Empty":
 					 bufferEmpty.dispatch();
