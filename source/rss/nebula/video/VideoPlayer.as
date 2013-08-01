@@ -51,6 +51,7 @@ package rss.nebula.video {
 		private var _disabled : Boolean;
 		private var _isBufferEmpty : Boolean = true;
 		private var _maxVolume : Number = 1;
+		private var _useStageVideo : Boolean;
 
 		/**
 		 * Construct the video player with a desired width and height:
@@ -69,7 +70,9 @@ package rss.nebula.video {
 		 * 	_player.plugInControl(_controlBar.playbackSlider);	// Implements IVideoScrubSlider, buffer, scrub and play head display.
 		 * 	_player.plugInControl(_controlBar.muteToggle);		// Implements IVideoMuteToggle, mutes and unmutes the video's sound.
 		 */
+
 		public function VideoPlayer(width : Number = 960, height : Number = 400, autoHideControls : Boolean = true, useStageVideo : Boolean = false, onVideoPlayerReady : Function = null, stageVideoScale : Number = 1.0, stageVideoIndex : int = 0) {
+			_useStageVideo = useStageVideo;
 			_stageVideoIndex = stageVideoIndex;
 			super(width, height);
 			_autoHideControls = autoHideControls;
@@ -77,26 +80,28 @@ package rss.nebula.video {
 			_controls = [];
 			_callbackVideoPlayerReady = onVideoPlayerReady;
 			_stageVideoScale = stageVideoScale;
-
-			if (useStageVideo) {
-				addEventListener(Event.ADDED_TO_STAGE, function(event : Event) : void {
-					stage.addEventListener(StageVideoAvailabilityEvent.STAGE_VIDEO_AVAILABILITY, handleStageVideoAvailabilityEvent);
-				});
-			} else {
-				initializeVideo("disabled");
-			}
+			
+			addEventListener(Event.ADDED_TO_STAGE, handleAddedToStage);
 
 			_timeout = new TimeDelay(hideControls, 2500, null, false, false);
 		}
 
+		private function handleAddedToStage(event : Event) : void {
+			if (_useStageVideo) {
+				stage.addEventListener(StageVideoAvailabilityEvent.STAGE_VIDEO_AVAILABILITY, handleStageVideoAvailabilityEvent);
+			} else {
+				initializeVideo("disabled");
+			}
+		}
+
 		override public function set x(value : Number) : void {
 			super.x = value;
-			_videoController.x = value;
+			if (_videoController)  	_videoController.x = value;
 		}
 
 		override public function set y(value : Number) : void {
 			super.y = value;
-			_videoController.y = value;
+			if (_videoController) _videoController.y = value;
 		}
 
 		override public function set width(value : Number) : void {
@@ -108,7 +113,7 @@ package rss.nebula.video {
 			super.height = value;
 			if (_videoController) _videoController.height = value;
 		}
-		
+
 		public function set maxVolume(value : Number) : void {
 			_maxVolume = value;
 			if (!_muted) volume = _maxVolume;
@@ -187,7 +192,7 @@ package rss.nebula.video {
 				control.addEventListener(FocusEvent.FOCUS_IN, triggerControlsToShow);
 				control.addEventListener(FocusEvent.FOCUS_OUT, triggerControlsToHide);
 			}
-			
+
 			updateButtons();
 		}
 
@@ -253,11 +258,10 @@ package rss.nebula.video {
 			updateButtons();
 			playbackStarted.dispatch();
 		}
-		
+
 		private function handleBufferFull() : void {
 			bufferFull.dispatch();
 			_isBufferEmpty = false;
-			if (_videoController.isPlaying()) videoPlayed.dispatch();
 			updateButtons();
 		}
 
@@ -267,7 +271,6 @@ package rss.nebula.video {
 			videoPaused.dispatch();
 			updateButtons();
 		}
-		
 
 		public function showControls() : void {
 			_timeout.reset();
@@ -355,7 +358,7 @@ package rss.nebula.video {
 			_videoController.seek(percent);
 			updateButtons();
 		}
-		
+
 		private function handleSeekNotified(value : Number) : void {
 			seekNotify.dispatch(value);
 		}
@@ -371,11 +374,11 @@ package rss.nebula.video {
 			}
 
 			addEventListener(Event.ENTER_FRAME, handleEnterFrame);
-//			if (_videoController.isPlaying()) {
-//				
-//			} else {
-//				removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
-//			}
+			// if (_videoController.isPlaying()) {
+			//
+			// } else {
+			// removeEventListener(Event.ENTER_FRAME, handleEnterFrame);
+			// }
 
 			var playbackToggles : Array = controlsWithInterface(IVideoPlaybackToggle);
 			for each (var playbackToggle : IVideoPlaybackToggle in playbackToggles) {
@@ -415,11 +418,11 @@ package rss.nebula.video {
 
 			return matching;
 		}
-		
+
 		public function enable() : void {
 			_disabled = false;
 		}
-		
+
 		public function disable() : void {
 			_disabled = true;
 		}
