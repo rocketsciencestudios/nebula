@@ -42,7 +42,7 @@ package rss.nebula.socialmedia.sharing {
 		}
 
 		public function get facebookVO() : FacebookShareVO {
-			return _facebookVO ||= _facebookVO = new FacebookShareVO();
+			return _facebookVO ||= new FacebookShareVO();
 		}
 
 		public function get twitterVO() : TwitterShareVO {
