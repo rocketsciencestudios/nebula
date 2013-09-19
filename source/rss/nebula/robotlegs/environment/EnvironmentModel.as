@@ -1,6 +1,4 @@
 package rss.nebula.robotlegs.environment {
-	import nl.rocketsciencestudios.RSSVersion;
-
 	import com.greensock.loading.LoaderMax;
 
 	import org.robotlegs.mvcs.Actor;
@@ -24,7 +22,8 @@ package rss.nebula.robotlegs.environment {
 		private var _versionHash : String;
 		private var _domain : String;
 
-		public function EnvironmentModel(timeline : DisplayObjectContainer) {
+		public function EnvironmentModel(timeline : DisplayObjectContainer = null) {
+			if (!timeline) return;
 			_timeline = timeline;
 			_environment = new Dictionary();
 			_loaderURL = _timeline.loaderInfo.loaderURL;
@@ -130,7 +129,6 @@ package rss.nebula.robotlegs.environment {
 				for each (var domain : String in domains) {
 					debug("domain: " + domain);
 					if (domain == inDomain) {
-						info(RSSVersion.HASH + " Using environment domain [" + domains + "] in " + _loaderURL);
 						groupedValues = group.value;
 						break;
 					} else if (domain == LOCALHOST) {
